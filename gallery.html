@@ -205,6 +205,23 @@
       background: rgba(224, 80, 80, 0.1);
     }
 
+    .delete-btn {
+      background: transparent;
+      border: 1px solid #e05050;
+      border-radius: 2px;
+      color: #e05050;
+      font-size: 0.75rem;
+      font-family: 'DM Sans', sans-serif;
+      padding: 0.25rem 0.5rem;
+      cursor: pointer;
+      margin-left: auto;
+      transition: all 0.2s;
+    }
+
+    .delete-btn:hover {
+      background: rgba(224, 80, 80, 0.15);
+    }
+
     .vote-score {
       font-size: 0.85rem;
       font-weight: 400;
@@ -296,6 +313,11 @@
     const sortToggle = document.getElementById('sortToggle');
     const MAX_ENTRIES = 2000;
 
+    // Admin mode: append ?admin=YOUR_PASSWORD to the URL
+    const ADMIN_PASSWORD = 'clr-admin-5*8erp';
+    const urlParams = new URLSearchParams(window.location.search);
+    const isAdmin = urlParams.get('admin') === ADMIN_PASSWORD;
+
     // Track votes per session so one user can only vote once per image
     const sessionVotes = {}; // docId -> 'up' | 'down'
 
@@ -356,7 +378,7 @@
           });
         });
 
-        status.innerHTML = `${allEntries.length} constellation${allEntries.length !== 1 ? 's' : ''} found within <a href="https://data.desi.lbl.gov/doc/releases/dr1/" target="_blank" rel="noopener">DESI DR1</a>`;
+        status.innerHTML = `${allEntries.length} constellation${allEntries.length !== 1 ? 's' : ''} found within <a href="https://data.desi.lbl.gov/doc/releases/dr1/" target="_blank" rel="noopener">DESI's DR1</a>`;
         sortToggle.style.display = 'flex';
         renderGallery();
 
@@ -399,6 +421,7 @@
             <button class="vote-btn upvote" data-id="${entry.id}" data-dir="up" title="Upvote">&#9650;</button>
             <span class="vote-score" id="score-${entry.id}">${net}</span>
             <button class="vote-btn downvote" data-id="${entry.id}" data-dir="down" title="Downvote">&#9660;</button>
+            ${isAdmin ? `<button class="delete-btn" data-id="${entry.id}" data-file="${entry.fileName || ''}">delete</button>` : ''}
           </div>
         </div>
       `;
@@ -411,6 +434,27 @@
       // Vote handlers
       card.querySelector('.upvote').addEventListener('click', () => vote(entry.id, 'up'));
       card.querySelector('.downvote').addEventListener('click', () => vote(entry.id, 'down'));
+
+      // Admin delete handler
+      const delBtn = card.querySelector('.delete-btn');
+      if (delBtn) {
+        delBtn.addEventListener('click', async () => {
+          if (!confirm(`Delete "${entry.constellationName}"?`)) return;
+          try {
+            await db.collection('constellations').doc(entry.id).delete();
+            if (entry.fileName) {
+              await storage.ref(`generated-constellations/${entry.fileName}`).delete();
+            }
+            allEntries = allEntries.filter(e => e.id !== entry.id);
+            card.remove();
+            status.innerHTML = `${allEntries.length} constellation${allEntries.length !== 1 ? 's' : ''} found within <a href="https://data.desi.lbl.gov/doc/releases/dr1/" target="_blank" rel="noopener">DESI's DR1</a>`;
+            showToast('Deleted.');
+          } catch (err) {
+            console.error('Delete failed:', err);
+            showToast('Delete failed.');
+          }
+        });
+      }
 
       return card;
     }

@@ -445,8 +445,8 @@
         ctx.beginPath();
         ctx.moveTo(pts[0].x * w, pts[0].y * h);
         for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x * w, pts[i].y * h);
-        ctx.strokeStyle = 'rgba(100, 250, 237, 0.7)';
-        ctx.lineWidth = 5;
+        ctx.strokeStyle = 'rgba(100, 250, 237, 0.6)';
+        ctx.lineWidth = 8;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         ctx.stroke();
@@ -503,8 +503,8 @@
           octx.beginPath();
           octx.moveTo(pts[0].x * out.width, pts[0].y * out.height);
           for (let i = 1; i < pts.length; i++) octx.lineTo(pts[i].x * out.width, pts[i].y * out.height);
-          octx.strokeStyle = 'rgba(100, 250, 237, 0.7)';
-          octx.lineWidth = 5;
+          octx.strokeStyle = 'rgba(100, 250, 237, 0.6)';
+          octx.lineWidth = 8;
           octx.lineCap = 'round';
           octx.lineJoin = 'round';
           octx.stroke();

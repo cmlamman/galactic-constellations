@@ -3,49 +3,499 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Galactic Constellations — See Others</title>
+  <title>Galactic Constellations — Gallery</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
     body {
       background: #000;
       color: #fff;
       font-family: 'DM Sans', sans-serif;
       min-height: 100vh;
     }
-    header { text-align: center; padding: 2.5rem 1rem 1.5rem; }
+
+    header {
+      text-align: center;
+      padding: 2.5rem 1rem 1.5rem;
+    }
+
     h1 {
-      font-family: 'Instrument Serif', serif;
-      font-weight: 400;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
       font-size: clamp(2.4rem, 5vw, 3.6rem);
       letter-spacing: 0.04em;
       margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
     }
-    nav { display: flex; justify-content: center; gap: 2.5rem; }
+
+    .title-icon {
+      height: 1em;
+      width: auto;
+    }
+
+    nav {
+      display: flex;
+      justify-content: center;
+      gap: 2.5rem;
+    }
+
     nav a {
-      color: #fff; text-decoration: none; font-size: 0.95rem;
-      font-weight: 300; letter-spacing: 0.08em; text-transform: uppercase;
-      padding-bottom: 4px; border-bottom: 1px solid transparent; transition: border-color 0.3s;
+      color: #fff;
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 300;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding-bottom: 4px;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.3s;
     }
-    nav a:hover, nav a.active { border-bottom-color: #fff; }
-    .coming-soon {
-      text-align: center; padding: 6rem 2rem;
-      font-size: 1.1rem; font-weight: 300; color: #666;
+
+    nav a:hover, nav a.active {
+      border-bottom-color: #fff;
+    }
+
+    /* ── Gallery ── */
+    .gallery-status {
+      text-align: center;
+      padding: 2rem 1rem 0.5rem;
+      font-size: 0.9rem;
+      font-weight: 300;
+      color: #555;
+    }
+
+    .gallery-status a {
+      color: #888;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .gallery-status a:hover {
+      color: #fff;
+    }
+
+    .sort-toggle {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem 0.5rem;
+    }
+
+    .sort-btn {
+      background: transparent;
+      border: 1px solid #333;
+      border-radius: 2px;
+      color: #888;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 300;
+      letter-spacing: 0.04em;
+      padding: 0.4rem 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .sort-btn:hover {
+      border-color: #555;
+      color: #ccc;
+    }
+
+    .sort-btn.active {
+      border-color: #64faed;
+      color: #64faed;
+    }
+
+    .gallery {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 1rem 2rem 3rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .card {
+      background: #0a0a0a;
+      border: 1px solid #1a1a1a;
+      border-radius: 3px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+
+    .card:hover {
+      border-color: #333;
+    }
+
+    .card-img {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      object-fit: cover;
+      display: block;
+      background: #0a0a0a;
+    }
+
+    .card-body {
+      padding: 0.8rem 1rem;
+    }
+
+    .card-title {
+      font-size: 0.95rem;
+      margin-bottom: 0.3rem;
+      color: #fff;
+      line-height: 1.4;
+    }
+
+    .card-title .name {
+      font-weight: 400;
+    }
+
+    .card-title .author {
+      font-weight: 300;
+      color: #888;
+      font-size: 0.8rem;
+    }
+
+    .card-slice {
+      font-size: 0.75rem;
+      font-weight: 300;
+      color: #666;
+      margin-bottom: 0.6rem;
+    }
+
+    .card-votes {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .vote-btn {
+      background: transparent;
+      border: 1px solid #333;
+      border-radius: 2px;
+      color: #888;
+      font-size: 0.85rem;
+      padding: 0.3rem 0.6rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'DM Sans', sans-serif;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .vote-btn:hover {
+      border-color: #555;
+      color: #fff;
+    }
+
+    .vote-btn.active-up {
+      border-color: #64faed;
+      color: #64faed;
+      background: rgba(100, 250, 237, 0.1);
+    }
+
+    .vote-btn.active-down {
+      border-color: #e05050;
+      color: #e05050;
+      background: rgba(224, 80, 80, 0.1);
+    }
+
+    .vote-score {
+      font-size: 0.85rem;
+      font-weight: 400;
+      color: #aaa;
+      min-width: 2rem;
+      text-align: center;
+    }
+
+    /* ── Loading / Empty ── */
+    .gallery-message {
+      text-align: center;
+      padding: 6rem 2rem;
+      font-size: 1.1rem;
+      font-weight: 300;
+      color: #666;
       letter-spacing: 0.05em;
+    }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #1a1a1a;
+      border: 1px solid #333;
+      color: #fff;
+      padding: 0.8rem 1.6rem;
+      font-size: 0.85rem;
+      border-radius: 3px;
+      opacity: 0;
+      transition: transform 0.4s ease, opacity 0.4s ease;
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    @media (max-width: 600px) {
+      .gallery {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        padding: 1rem;
+        gap: 1rem;
+      }
     }
   </style>
 </head>
 <body>
+
   <header>
-    <h1>Galactic Constellations</h1>
+    <h1><img src="gc-fish.svg" alt="" class="title-icon">Galactic Constellations</h1>
     <nav>
       <a href="index.html">Find constellations</a>
       <a href="gallery.html" class="active">See others</a>
     </nav>
   </header>
-  <main>
-    <p class="coming-soon">Gallery coming soon.</p>
-  </main>
+
+  <p class="gallery-status" id="status">Loading gallery…</p>
+  <div class="sort-toggle" id="sortToggle" style="display:none;">
+    <button class="sort-btn active" id="sortTop">Top discoveries</button>
+    <button class="sort-btn" id="sortNew">New discoveries</button>
+  </div>
+  <main class="gallery" id="gallery"></main>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    firebase.initializeApp({
+      apiKey: "AIzaSyDwMgQ53YGwDWL1IhhkBbsIvauALELvpMY",
+      authDomain: "galactic-constellations.firebaseapp.com",
+      projectId: "galactic-constellations",
+      storageBucket: "galactic-constellations.firebasestorage.app",
+      messagingSenderId: "761744782436",
+      appId: "1:761744782436:web:749b09fe749f9548bc5b71",
+      measurementId: "G-EV9PPQDPCS"
+    });
+
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+    const gallery = document.getElementById('gallery');
+    const status = document.getElementById('status');
+    const sortToggle = document.getElementById('sortToggle');
+    const MAX_ENTRIES = 2000;
+
+    // Track votes per session so one user can only vote once per image
+    const sessionVotes = {}; // docId -> 'up' | 'down'
+
+    let allEntries = [];
+    let currentSort = 'top'; // 'top' | 'new'
+
+    // ── Sort toggle ──
+    document.getElementById('sortTop').addEventListener('click', () => {
+      if (currentSort === 'top') return;
+      currentSort = 'top';
+      document.getElementById('sortTop').classList.add('active');
+      document.getElementById('sortNew').classList.remove('active');
+      renderGallery();
+    });
+
+    document.getElementById('sortNew').addEventListener('click', () => {
+      if (currentSort === 'new') return;
+      currentSort = 'new';
+      document.getElementById('sortNew').classList.add('active');
+      document.getElementById('sortTop').classList.remove('active');
+      renderGallery();
+    });
+
+    // ── Render with current sort ──
+    function renderGallery() {
+      const sorted = [...allEntries];
+      if (currentSort === 'top') {
+        sorted.sort((a, b) => {
+          if (b.netVotes !== a.netVotes) return b.netVotes - a.netVotes;
+          return b.createdAt - a.createdAt;
+        });
+      } else {
+        sorted.sort((a, b) => b.createdAt - a.createdAt);
+      }
+
+      gallery.innerHTML = '';
+      sorted.forEach(entry => gallery.appendChild(createCard(entry)));
+    }
+
+    // ── Load and render ──
+    async function loadGallery() {
+      try {
+        const snapshot = await db.collection('constellations').get();
+
+        if (snapshot.empty) {
+          status.textContent = 'No constellations yet. Be the first to share one!';
+          return;
+        }
+
+        allEntries = [];
+        snapshot.forEach(doc => {
+          const d = doc.data();
+          allEntries.push({
+            id: doc.id,
+            ...d,
+            netVotes: (d.upvotes || 0) - (d.downvotes || 0),
+            createdAt: d.createdAt ? d.createdAt.toMillis() : 0
+          });
+        });
+
+        status.innerHTML = `${allEntries.length} constellation${allEntries.length !== 1 ? 's' : ''} found within <a href="https://data.desi.lbl.gov/doc/releases/dr1/" target="_blank" rel="noopener">DESI DR1</a>`;
+        sortToggle.style.display = 'flex';
+        renderGallery();
+
+        // Prune if over limit (sort by top for pruning decisions)
+        if (allEntries.length > MAX_ENTRIES) {
+          const pruneSorted = [...allEntries].sort((a, b) => {
+            if (b.netVotes !== a.netVotes) return b.netVotes - a.netVotes;
+            return b.createdAt - a.createdAt;
+          });
+          pruneExcess(pruneSorted);
+        }
+
+      } catch (err) {
+        console.error('Failed to load gallery:', err);
+        status.textContent = 'Failed to load gallery.';
+      }
+    }
+
+    function parseName(fname) {
+      const m = fname.match(/ra([\d.-]+)_dec([\d.-]+)_z([\d.]+)_size_([\d.]+)\.png/);
+      if (!m) return null;
+      return { ra: m[1], dec: m[2], z: m[3], size: m[4] };
+    }
+
+    // ── Create a card ──
+    function createCard(entry) {
+      const card = document.createElement('div');
+      card.className = 'card';
+
+      const net = (entry.upvotes || 0) - (entry.downvotes || 0);
+      const p = parseName(entry.sourceImage || '');
+      const sliceText = p ? `${p.size} Mpc/h slice · z=${p.z}  RA=${p.ra}  DEC=${p.dec}` : '';
+
+      card.innerHTML = `
+        <img class="card-img" src="${entry.imageUrl}" alt="${entry.constellationName || 'Constellation'}" loading="lazy" />
+        <div class="card-body">
+          <div class="card-title"><span class="name">"${entry.constellationName || 'Untitled'}"</span> <span class="author">found by ${entry.astronomerName || 'Anonymous'}</span></div>
+          ${sliceText ? `<div class="card-slice">${sliceText}</div>` : ''}
+          <div class="card-votes">
+            <button class="vote-btn upvote" data-id="${entry.id}" data-dir="up" title="Upvote">&#9650;</button>
+            <span class="vote-score" id="score-${entry.id}">${net}</span>
+            <button class="vote-btn downvote" data-id="${entry.id}" data-dir="down" title="Downvote">&#9660;</button>
+          </div>
+        </div>
+      `;
+
+      // Restore session vote state
+      const prev = sessionVotes[entry.id];
+      if (prev === 'up') card.querySelector('.upvote').classList.add('active-up');
+      if (prev === 'down') card.querySelector('.downvote').classList.add('active-down');
+
+      // Vote handlers
+      card.querySelector('.upvote').addEventListener('click', () => vote(entry.id, 'up'));
+      card.querySelector('.downvote').addEventListener('click', () => vote(entry.id, 'down'));
+
+      return card;
+    }
+
+    // ── Vote logic ──
+    async function vote(docId, direction) {
+      const prev = sessionVotes[docId];
+      const ref = db.collection('constellations').doc(docId);
+
+      try {
+        if (prev === direction) {
+          // Undo vote
+          if (direction === 'up') {
+            await ref.update({ upvotes: firebase.firestore.FieldValue.increment(-1) });
+          } else {
+            await ref.update({ downvotes: firebase.firestore.FieldValue.increment(-1) });
+          }
+          delete sessionVotes[docId];
+        } else {
+          // Remove previous vote if switching
+          if (prev === 'up') {
+            await ref.update({ upvotes: firebase.firestore.FieldValue.increment(-1) });
+          } else if (prev === 'down') {
+            await ref.update({ downvotes: firebase.firestore.FieldValue.increment(-1) });
+          }
+
+          // Apply new vote
+          if (direction === 'up') {
+            await ref.update({ upvotes: firebase.firestore.FieldValue.increment(1) });
+          } else {
+            await ref.update({ downvotes: firebase.firestore.FieldValue.increment(1) });
+          }
+          sessionVotes[docId] = direction;
+        }
+
+        // Update UI
+        const doc = await ref.get();
+        const d = doc.data();
+        const net = (d.upvotes || 0) - (d.downvotes || 0);
+        const scoreEl = document.getElementById(`score-${docId}`);
+        if (scoreEl) scoreEl.textContent = net;
+
+        // Update button states
+        const upBtn = document.querySelector(`.upvote[data-id="${docId}"]`);
+        const downBtn = document.querySelector(`.downvote[data-id="${docId}"]`);
+        upBtn.classList.toggle('active-up', sessionVotes[docId] === 'up');
+        downBtn.classList.toggle('active-down', sessionVotes[docId] === 'down');
+
+      } catch (err) {
+        console.error('Vote failed:', err);
+        showToast('Vote failed — please try again.');
+      }
+    }
+
+    // ── Prune entries beyond MAX_ENTRIES ──
+    async function pruneExcess(sortedEntries) {
+      // sortedEntries is already sorted best-first
+      // Remove everything beyond the limit
+      const toRemove = sortedEntries.slice(MAX_ENTRIES);
+
+      for (const entry of toRemove) {
+        try {
+          // Delete from Firestore
+          await db.collection('constellations').doc(entry.id).delete();
+          // Delete from Storage
+          await storage.ref(`generated-constellations/${entry.fileName}`).delete();
+        } catch (err) {
+          console.error(`Failed to prune ${entry.id}:`, err);
+        }
+      }
+
+      if (toRemove.length) {
+        console.log(`Pruned ${toRemove.length} entries.`);
+      }
+    }
+
+    // ── Toast ──
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    loadGallery();
+  </script>
 </body>
 </html>

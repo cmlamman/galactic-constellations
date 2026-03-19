@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Galactic Constellations — See Others</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #000;
+      color: #fff;
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+    }
+    header { text-align: center; padding: 2.5rem 1rem 1.5rem; }
+    h1 {
+      font-family: 'Instrument Serif', serif;
+      font-weight: 400;
+      font-size: clamp(2.4rem, 5vw, 3.6rem);
+      letter-spacing: 0.04em;
+      margin-bottom: 1rem;
+    }
+    nav { display: flex; justify-content: center; gap: 2.5rem; }
+    nav a {
+      color: #fff; text-decoration: none; font-size: 0.95rem;
+      font-weight: 300; letter-spacing: 0.08em; text-transform: uppercase;
+      padding-bottom: 4px; border-bottom: 1px solid transparent; transition: border-color 0.3s;
+    }
+    nav a:hover, nav a.active { border-bottom-color: #fff; }
+    .coming-soon {
+      text-align: center; padding: 6rem 2rem;
+      font-size: 1.1rem; font-weight: 300; color: #666;
+      letter-spacing: 0.05em;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Galactic Constellations</h1>
+    <nav>
+      <a href="index.html">Find constellations</a>
+      <a href="gallery.html" class="active">See others</a>
+    </nav>
+  </header>
+  <main>
+    <p class="coming-soon">Gallery coming soon.</p>
+  </main>
+</body>
+</html>

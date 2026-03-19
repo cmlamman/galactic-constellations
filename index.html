@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Galactic Constellations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #000;
+      color: #fff;
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Header ── */
+    header {
+      text-align: center;
+      padding: 2.5rem 1rem 1.5rem;
+    }
+
+    h1 {
+      font-family: 'Instrument Serif', serif;
+      font-weight: 400;
+      font-size: clamp(2.4rem, 5vw, 3.6rem);
+      letter-spacing: 0.04em;
+      margin-bottom: 1rem;
+    }
+
+    nav {
+      display: flex;
+      justify-content: center;
+      gap: 2.5rem;
+    }
+
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 300;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding-bottom: 4px;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.3s;
+    }
+
+    nav a:hover, nav a.active {
+      border-bottom-color: #fff;
+    }
+
+    /* ── Main layout ── */
+    .page {
+      display: flex;
+      gap: 2.5rem;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 1.5rem 2rem 3rem;
+    }
+
+    .left {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .right {
+      width: 220px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+      padding-top: 0.25rem;
+    }
+
+    /* ── Canvas area ── */
+    .canvas-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      background: #0a0a0a;
+      border: 1px solid #1a1a1a;
+      cursor: crosshair;
+      overflow: hidden;
+    }
+
+    .canvas-wrap img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .canvas-wrap canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .image-caption {
+      margin-top: 0.75rem;
+      font-size: 0.85rem;
+      font-weight: 300;
+      color: #ccc;
+      letter-spacing: 0.02em;
+    }
+
+    /* ── Sidebar controls ── */
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 0.7rem 1rem;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 400;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #fff;
+      background: transparent;
+      border: 1px solid #333;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .btn:hover {
+      background: #1a1a1a;
+      border-color: #555;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      margin: 0.4rem 0;
+    }
+
+    /* ── Share section ── */
+    .share-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+      transition: opacity 0.3s;
+    }
+
+    .share-section.disabled {
+      opacity: 0.3;
+      pointer-events: none;
+    }
+
+    .share-section h3 {
+      font-family: 'Instrument Serif', serif;
+      font-weight: 400;
+      font-size: 1.05rem;
+      letter-spacing: 0.03em;
+    }
+
+    .share-section input {
+      width: 100%;
+      padding: 0.55rem 0.7rem;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.82rem;
+      color: #fff;
+      background: #0a0a0a;
+      border: 1px solid #333;
+      border-radius: 2px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .share-section input::placeholder {
+      color: #555;
+    }
+
+    .share-section input:focus {
+      border-color: #666;
+    }
+
+    .btn-submit {
+      background: #b22222;
+      border-color: #b22222;
+    }
+
+    .btn-submit:hover {
+      background: #cc3333;
+      border-color: #cc3333;
+    }
+
+    /* ── Toast notification ── */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #1a1a1a;
+      border: 1px solid #333;
+      color: #fff;
+      padding: 0.8rem 1.6rem;
+      font-size: 0.85rem;
+      border-radius: 3px;
+      opacity: 0;
+      transition: transform 0.4s ease, opacity 0.4s ease;
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    /* ── Loading state ── */
+    .canvas-wrap.loading img { opacity: 0.3; }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .page {
+        flex-direction: column;
+        padding: 1rem;
+      }
+      .right {
+        width: 100%;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+      }
+      .right .btn { width: auto; flex: 1; min-width: 100px; }
+      .share-section { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Galactic Constellations</h1>
+    <nav>
+      <a href="index.html" class="active">Find constellations</a>
+      <a href="gallery.html">See others</a>
+    </nav>
+  </header>
+
+  <main class="page">
+    <section class="left">
+      <div class="canvas-wrap" id="canvasWrap">
+        <img id="sliceImg" alt="Galaxy slice" />
+        <canvas id="drawCanvas"></canvas>
+      </div>
+      <p class="image-caption" id="caption">Loading…</p>
+    </section>
+
+    <aside class="right">
+      <button class="btn" id="btnNew">New slice</button>
+      <button class="btn" id="btnRotate">Rotate</button>
+      <button class="btn" id="btnUndo">Undo</button>
+
+      <hr class="divider">
+
+      <div class="share-section disabled" id="shareSection">
+        <h3>Share my constellation</h3>
+        <input type="text" id="constellationName" placeholder="Constellation name" />
+        <input type="text" id="astronomerName" placeholder="Astronomer name" />
+        <button class="btn btn-submit" id="btnSubmit">Submit</button>
+      </div>
+    </aside>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ── State ──
+    let imageList = [];
+    let currentFile = '';
+    let rotation = 0;          // 0, 90, 180, 270
+    let strokes = [];          // array of stroke arrays [{x, y}, ...]
+    let currentStroke = null;
+    let isDrawing = false;
+    let hasDrawn = false;
+
+    const img        = document.getElementById('sliceImg');
+    const canvas     = document.getElementById('drawCanvas');
+    const ctx        = canvas.getContext('2d');
+    const caption    = document.getElementById('caption');
+    const share      = document.getElementById('shareSection');
+    const toast      = document.getElementById('toast');
+
+    // ── Load image list ──
+    async function init() {
+      try {
+        const res = await fetch('web-images/images.json');
+        imageList = await res.json();
+      } catch {
+        caption.textContent = 'Could not load image list. Make sure web-images/images.json exists.';
+        return;
+      }
+      loadRandomSlice();
+    }
+
+    // ── Parse filename ──
+    function parseName(fname) {
+      // ra{ra:.1f}_dec{dec:.1f}_z{z:.2f}_size_{size}.png
+      const m = fname.match(/ra([\d.-]+)_dec([\d.-]+)_z([\d.]+)_size_([\d.]+)\.png/);
+      if (!m) return null;
+      return { ra: m[1], dec: m[2], z: m[3], size: m[4] };
+    }
+
+    // ── Load a random slice ──
+    function loadRandomSlice() {
+      if (!imageList.length) return;
+      currentFile = imageList[Math.floor(Math.random() * imageList.length)];
+      rotation = 0;
+      strokes = [];
+      hasDrawn = false;
+      share.classList.add('disabled');
+      img.src = 'web-images/' + currentFile;
+      updateCaption();
+      img.onload = () => resizeCanvas();
+    }
+
+    function updateCaption() {
+      const p = parseName(currentFile);
+      if (p) {
+        caption.textContent = `${p.size} Mpc/h slice from DESI DR1. RA: ${p.ra} | DEC: ${p.dec}`;
+      } else {
+        caption.textContent = currentFile;
+      }
+    }
+
+    // ── Canvas sizing ──
+    function resizeCanvas() {
+      const wrap = document.getElementById('canvasWrap');
+      canvas.width  = wrap.offsetWidth;
+      canvas.height = wrap.offsetHeight;
+      redraw();
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    // ── Drawing ──
+    function getPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return {
+        x: (clientX - rect.left) / rect.width,
+        y: (clientY - rect.top) / rect.height
+      };
+    }
+
+    canvas.addEventListener('mousedown', startDraw);
+    canvas.addEventListener('mousemove', moveDraw);
+    canvas.addEventListener('mouseup', endDraw);
+    canvas.addEventListener('mouseleave', endDraw);
+    canvas.addEventListener('touchstart', e => { e.preventDefault(); startDraw(e); }, { passive: false });
+    canvas.addEventListener('touchmove',  e => { e.preventDefault(); moveDraw(e); },  { passive: false });
+    canvas.addEventListener('touchend', endDraw);
+
+    function startDraw(e) {
+      isDrawing = true;
+      currentStroke = [getPos(e)];
+    }
+
+    function moveDraw(e) {
+      if (!isDrawing) return;
+      const p = getPos(e);
+      currentStroke.push(p);
+      redraw();
+    }
+
+    function endDraw() {
+      if (!isDrawing) return;
+      isDrawing = false;
+      if (currentStroke && currentStroke.length > 1) {
+        strokes.push(currentStroke);
+        hasDrawn = true;
+        share.classList.remove('disabled');
+      }
+      currentStroke = null;
+      redraw();
+    }
+
+    function redraw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const w = canvas.width, h = canvas.height;
+
+      function drawStroke(pts) {
+        if (pts.length < 2) return;
+        ctx.beginPath();
+        ctx.moveTo(pts[0].x * w, pts[0].y * h);
+        for (let i = 1; i < pts.length; i++) {
+          ctx.lineTo(pts[i].x * w, pts[i].y * h);
+        }
+        ctx.strokeStyle = '#e03030';
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.stroke();
+      }
+
+      strokes.forEach(drawStroke);
+      if (currentStroke) drawStroke(currentStroke);
+    }
+
+    // ── Rotation ──
+    document.getElementById('btnRotate').addEventListener('click', () => {
+      rotation = (rotation + 90) % 360;
+      img.style.transform = `rotate(${rotation}deg)`;
+    });
+
+    // ── New slice ──
+    document.getElementById('btnNew').addEventListener('click', loadRandomSlice);
+
+    // ── Undo ──
+    document.getElementById('btnUndo').addEventListener('click', () => {
+      if (strokes.length) {
+        strokes.pop();
+        if (!strokes.length) {
+          hasDrawn = false;
+          share.classList.add('disabled');
+        }
+        redraw();
+      }
+    });
+
+    // ── Submit ──
+    document.getElementById('btnSubmit').addEventListener('click', () => {
+      const cName = document.getElementById('constellationName').value.trim();
+      const aName = document.getElementById('astronomerName').value.trim();
+
+      if (!cName || !aName) {
+        showToast('Please fill in both fields.');
+        return;
+      }
+
+      // Compose the final image (background + drawing)
+      const out = document.createElement('canvas');
+      const wrap = document.getElementById('canvasWrap');
+      out.width  = wrap.offsetWidth;
+      out.height = wrap.offsetHeight;
+      const octx = out.getContext('2d');
+
+      // Draw rotated background
+      octx.save();
+      octx.translate(out.width / 2, out.height / 2);
+      octx.rotate((rotation * Math.PI) / 180);
+      octx.drawImage(img, -out.width / 2, -out.height / 2, out.width, out.height);
+      octx.restore();
+
+      // Draw strokes
+      strokes.forEach(pts => {
+        if (pts.length < 2) return;
+        octx.beginPath();
+        octx.moveTo(pts[0].x * out.width, pts[0].y * out.height);
+        for (let i = 1; i < pts.length; i++) {
+          octx.lineTo(pts[i].x * out.width, pts[i].y * out.height);
+        }
+        octx.strokeStyle = '#e03030';
+        octx.lineWidth = 2.5;
+        octx.lineCap = 'round';
+        octx.lineJoin = 'round';
+        octx.stroke();
+      });
+
+      // Build filename
+      const base = currentFile.replace('.png', '');
+      const safeCName = cName.replace(/[^a-zA-Z0-9_-]/g, '_');
+      const safeAName = aName.replace(/[^a-zA-Z0-9_-]/g, '_');
+      const outName = `${base}_${safeCName}_${safeAName}.png`;
+
+      // Download
+      const link = document.createElement('a');
+      link.download = outName;
+      link.href = out.toDataURL('image/png');
+      link.click();
+
+      showToast('Constellation shared!');
+    });
+
+    // ── Toast helper ──
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    // ── Start ──
+    init();
+  </script>
+</body>
+</html>

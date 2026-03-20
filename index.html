@@ -83,6 +83,14 @@
       padding-top: 0.25rem;
     }
 
+    .draw-instruction {
+      font-size: 1.2rem;
+      font-weight: 300;
+      color: #555;
+      margin-bottom: 0.5rem;
+      letter-spacing: 0.02em;
+    }
+
     .canvas-wrap {
       position: relative;
       width: 100%;
@@ -278,6 +286,7 @@
 
   <main class="page">
     <section class="left">
+      <p class="draw-instruction">Draw your constellation below</p>
       <div class="canvas-wrap" id="canvasWrap">
         <img id="sliceImg" alt="Galaxy slice" />
         <canvas id="drawCanvas"></canvas>
@@ -324,7 +333,7 @@
     const storage = firebase.storage();
     const db = firebase.firestore();
     const MAX_SUBMISSIONS = 2000;
-    const RATE_LIMIT_MS = 10000;
+    const RATE_LIMIT_MS = 60000;
     let lastSubmitTime = 0;
     let lastSubmittedKey = '';
     let lastDownloadedKey = '';
@@ -368,7 +377,7 @@
     function loadRandomSlice() {
       if (!imageList.length) return;
       currentFile = imageList[Math.floor(Math.random() * imageList.length)];
-      rotation = 0;
+      rotation = [0, 90, 180, 270][Math.floor(Math.random() * 4)];
       strokes = [];
       hasDrawn = false;
       lastSubmittedKey = '';
@@ -377,7 +386,7 @@
       document.getElementById('constellationName').value = '';
       document.getElementById('astronomerName').value = '';
       img.src = 'web-images/' + currentFile;
-      img.style.transform = '';
+      img.style.transform = `rotate(${rotation}deg)`;
       updateCaption();
       img.onload = () => resizeCanvas();
     }
@@ -481,6 +490,11 @@
           redraw();
         }
       }
+      if (e.key === 'ArrowRight' && !e.ctrlKey && !e.metaKey) {
+        // Don't trigger if user is typing in an input
+        if (document.activeElement.tagName === 'INPUT') return;
+        loadRandomSlice();
+      }
     });
 
     // ── Compose final image ──
@@ -565,8 +579,8 @@
           octx.beginPath();
           octx.moveTo(pts[0].x * imgW, pts[0].y * imgH);
           for (let i = 1; i < pts.length; i++) octx.lineTo(pts[i].x * imgW, pts[i].y * imgH);
-          octx.strokeStyle = 'rgba(100, 250, 237, 0.7)';
-          octx.lineWidth = 5;
+          octx.strokeStyle = 'rgba(100, 250, 237, 0.6)';
+          octx.lineWidth = 8;
           octx.lineCap = 'round';
           octx.lineJoin = 'round';
           octx.stroke();

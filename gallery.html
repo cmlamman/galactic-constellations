@@ -66,11 +66,11 @@
       padding: 2rem 1rem 0.5rem;
       font-size: 0.9rem;
       font-weight: 300;
-      color: #555;
+      color: #ccc;
     }
 
     .gallery-status a {
-      color: #888;
+      color: #ddd;
       text-decoration: underline;
       text-underline-offset: 2px;
     }
@@ -82,15 +82,24 @@
     .sort-toggle {
       display: flex;
       justify-content: center;
+      align-items: center;
       gap: 0.5rem;
       padding: 0.5rem 1rem 0.5rem;
+    }
+
+    .sort-label {
+      font-size: 0.82rem;
+      font-weight: 300;
+      color: #ccc;
+      letter-spacing: 0.04em;
+      margin-left: 1rem;
     }
 
     .sort-btn {
       background: transparent;
       border: 1px solid #333;
       border-radius: 2px;
-      color: #888;
+      color: #ccc;
       font-family: 'DM Sans', sans-serif;
       font-size: 0.82rem;
       font-weight: 300;
@@ -102,7 +111,7 @@
 
     .sort-btn:hover {
       border-color: #555;
-      color: #ccc;
+      color: #fff;
     }
 
     .sort-btn.active {
@@ -205,6 +214,12 @@
       background: rgba(224, 80, 80, 0.1);
     }
 
+    .vote-btn.disabled {
+      pointer-events: none;
+      opacity: 0.3;
+      cursor: default;
+    }
+
     .delete-btn {
       background: transparent;
       border: 1px solid #e05050;
@@ -285,6 +300,8 @@
   <p class="gallery-status" id="status">Loading gallery…</p>
   <div class="sort-toggle" id="sortToggle" style="display:none;">
     <button class="sort-btn active" id="sortTop">Top discoveries</button>
+    <span class="sort-label">Under peer review:</span>
+    <button class="sort-btn" id="sortRandom">Random</button>
     <button class="sort-btn" id="sortNew">New discoveries</button>
   </div>
   <main class="gallery" id="gallery"></main>
@@ -314,7 +331,7 @@
     const MAX_ENTRIES = 2000;
 
     // Admin mode: append ?admin=YOUR_PASSWORD to the URL
-    const ADMIN_PASSWORD = 'clr-admin-5*8erp';
+    const ADMIN_PASSWORD = 'desi-admin-2026';
     const urlParams = new URLSearchParams(window.location.search);
     const isAdmin = urlParams.get('admin') === ADMIN_PASSWORD;
 
@@ -322,24 +339,27 @@
     const sessionVotes = {}; // docId -> 'up' | 'down'
 
     let allEntries = [];
-    let currentSort = 'top'; // 'top' | 'new'
+    let currentSort = 'top'; // 'top' | 'new' | 'random'
+    const PAGE_LIMIT = 72;
+
+    const sortButtons = {
+      top: document.getElementById('sortTop'),
+      random: document.getElementById('sortRandom'),
+      new: document.getElementById('sortNew')
+    };
 
     // ── Sort toggle ──
-    document.getElementById('sortTop').addEventListener('click', () => {
-      if (currentSort === 'top') return;
-      currentSort = 'top';
-      document.getElementById('sortTop').classList.add('active');
-      document.getElementById('sortNew').classList.remove('active');
+    function setSort(mode) {
+      if (currentSort === mode) return;
+      currentSort = mode;
+      Object.values(sortButtons).forEach(btn => btn.classList.remove('active'));
+      sortButtons[mode].classList.add('active');
       renderGallery();
-    });
+    }
 
-    document.getElementById('sortNew').addEventListener('click', () => {
-      if (currentSort === 'new') return;
-      currentSort = 'new';
-      document.getElementById('sortNew').classList.add('active');
-      document.getElementById('sortTop').classList.remove('active');
-      renderGallery();
-    });
+    sortButtons.top.addEventListener('click', () => setSort('top'));
+    sortButtons.random.addEventListener('click', () => setSort('random'));
+    sortButtons.new.addEventListener('click', () => setSort('new'));
 
     // ── Render with current sort ──
     function renderGallery() {
@@ -349,12 +369,21 @@
           if (b.netVotes !== a.netVotes) return b.netVotes - a.netVotes;
           return b.createdAt - a.createdAt;
         });
-      } else {
+      } else if (currentSort === 'new') {
         sorted.sort((a, b) => b.createdAt - a.createdAt);
+      } else {
+        // Fisher-Yates shuffle
+        for (let i = sorted.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [sorted[i], sorted[j]] = [sorted[j], sorted[i]];
+        }
       }
 
+      const votingDisabled = currentSort === 'top';
+      const limited = sorted.slice(0, PAGE_LIMIT);
+
       gallery.innerHTML = '';
-      sorted.forEach(entry => gallery.appendChild(createCard(entry)));
+      limited.forEach(entry => gallery.appendChild(createCard(entry, votingDisabled)));
     }
 
     // ── Load and render ──
@@ -404,13 +433,14 @@
     }
 
     // ── Create a card ──
-    function createCard(entry) {
+    function createCard(entry, votingDisabled) {
       const card = document.createElement('div');
       card.className = 'card';
 
       const net = (entry.upvotes || 0) - (entry.downvotes || 0);
       const p = parseName(entry.sourceImage || '');
       const sliceText = p ? `${p.size} Mpc/h slice · z=${p.z}  RA=${p.ra}  DEC=${p.dec}` : '';
+      const disabledClass = votingDisabled ? ' disabled' : '';
 
       card.innerHTML = `
         <img class="card-img" src="${entry.imageUrl}" alt="${entry.constellationName || 'Constellation'}" loading="lazy" />
@@ -418,9 +448,9 @@
           <div class="card-title"><span class="name">"${entry.constellationName || 'Untitled'}"</span> <span class="author">found by ${entry.astronomerName || 'Anonymous'}</span></div>
           ${sliceText ? `<div class="card-slice">${sliceText}</div>` : ''}
           <div class="card-votes">
-            <button class="vote-btn upvote" data-id="${entry.id}" data-dir="up" title="Upvote">&#9650;</button>
+            <button class="vote-btn upvote${disabledClass}" data-id="${entry.id}" data-dir="up" title="Upvote">&#9650;</button>
             <span class="vote-score" id="score-${entry.id}">${net}</span>
-            <button class="vote-btn downvote" data-id="${entry.id}" data-dir="down" title="Downvote">&#9660;</button>
+            <button class="vote-btn downvote${disabledClass}" data-id="${entry.id}" data-dir="down" title="Downvote">&#9660;</button>
             ${isAdmin ? `<button class="delete-btn" data-id="${entry.id}" data-file="${entry.fileName || ''}">delete</button>` : ''}
           </div>
         </div>
@@ -431,9 +461,11 @@
       if (prev === 'up') card.querySelector('.upvote').classList.add('active-up');
       if (prev === 'down') card.querySelector('.downvote').classList.add('active-down');
 
-      // Vote handlers
-      card.querySelector('.upvote').addEventListener('click', () => vote(entry.id, 'up'));
-      card.querySelector('.downvote').addEventListener('click', () => vote(entry.id, 'down'));
+      // Vote handlers (only if voting enabled)
+      if (!votingDisabled) {
+        card.querySelector('.upvote').addEventListener('click', () => vote(entry.id, 'up'));
+        card.querySelector('.downvote').addEventListener('click', () => vote(entry.id, 'down'));
+      }
 
       // Admin delete handler
       const delBtn = card.querySelector('.delete-btn');

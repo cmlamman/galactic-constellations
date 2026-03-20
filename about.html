@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Galactic Constellations — About</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #000;
+      color: #fff;
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+    }
+
+    header {
+      text-align: center;
+      padding: 2.5rem 1rem 1.5rem;
+    }
+
+    h1 {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      font-size: clamp(2.4rem, 5vw, 3.6rem);
+      letter-spacing: 0.04em;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+    }
+
+    .title-icon {
+      height: 1em;
+      width: auto;
+    }
+
+    nav {
+      display: flex;
+      justify-content: center;
+      gap: 2.5rem;
+    }
+
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 300;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding-bottom: 4px;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.3s;
+    }
+
+    nav a:hover, nav a.active {
+      border-bottom-color: #fff;
+    }
+
+    .about-content {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 2rem 2rem 1rem;
+    }
+
+    .about-content p {
+      font-size: 1rem;
+      font-weight: 300;
+      line-height: 1.75;
+      color: #ccc;
+      margin-bottom: 1.2rem;
+    }
+
+    .about-content a {
+      color: #64faed;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .about-content a:hover {
+      color: #8bfcf2;
+    }
+
+    .about-content h2 {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 500;
+      font-size: 1.1rem;
+      color: #fff;
+      margin-top: 2rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .media-block {
+      margin: 2rem 0;
+    }
+
+    .media-block video,
+    .media-block img {
+      width: 100%;
+      border-radius: 3px;
+      border: 1px solid #1a1a1a;
+      display: block;
+    }
+
+    .site-footer {
+      text-align: center;
+      padding: 2rem 1rem;
+      font-size: 0.8rem;
+      font-weight: 300;
+      color: #555;
+      letter-spacing: 0.03em;
+    }
+
+    @media (max-width: 600px) {
+      .about-content {
+        padding: 1.5rem 1rem 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1><img src="gc-fish.svg" alt="" class="title-icon">Galactic Constellations</h1>
+    <nav>
+      <a href="index.html">Find constellations</a>
+      <a href="gallery.html">See others</a>
+      <a href="about.html" class="active">About</a>
+    </nav>
+  </header>
+
+  <main class="about-content">
+    <p>The images on this website are slices from a massive 3D map of galaxies, created by the <a href="https://www.desi.lbl.gov/" target="_blank" rel="noopener">Dark Energy Spectroscopic Instrument (DESI)</a>. DESI is measuring the distances to 63 million galaxies over 8 years. The data used here are from a portion of <a href="https://data.desi.lbl.gov/doc/releases/dr1/" target="_blank" rel="noopener">DESI's first public data release (DR1)</a>, containing 14 million extragalactic spectra.</p>
+
+    <p>From the full DR1 catalog, these images of the cosmic web come from a band of the sky where the survey is very complete. This sky band results in a 3D wedge of the cosmic web, as shown in this video. The galaxies you see here are also limited to the closest galaxies that DESI observes, all within redshift z&nbsp;=&nbsp;0.8 or about 3.5 billion light years. This is the most complete part of DESI's survey, where you can best see the galaxies tracing the giant underlying web of dark matter.</p>
+
+    <div class="media-block">
+      <video controls preload="metadata">
+        <source src="media/slice_context_animation.mov" type="video/quicktime">
+        <source src="media/slice_context_animation.mov" type="video/mp4">
+        Your browser does not support this video format.
+      </video>
+    </div>
+
+    <p>The full survey extends much farther. A slice of DESI's five-year survey (what will eventually be DR3) is shown here. The furthest galaxies in the image are 11 billion light years away; the light we observed left those galaxies when the universe was just 1/5 its current age and 1/3 its current size! Stay tuned for updates to this website when more DESI data becomes public.</p>
+
+    <div class="media-block">
+      <img src="media/DESI-Y5-butterfly-cool-web.jpg" alt="Slice of DESI's five-year survey showing the cosmic web" />
+    </div>
+
+    <h2>Why are there gaps in the map?</h2>
+    <p>You may see an image close to the edge of the survey. DESI only measures galaxies above the Milky Way (corresponding to the top of wedge of the butterfly shown above) and below it. The gap between the wedges is dark because it contains galaxies obscured by our own galaxy.</p>
+
+    <h2>Why are there streaks of galaxies?</h2>
+    <p>This is an artifact of how we determine the distances to galaxies. DESI measures how fast galaxies move relative to Earth. Since the universe is expanding, this is a good measure of their distance. The further away a galaxy is, the more space there is between us to expand, and the faster the galaxy moves away from us. However, galaxies also move around each other in clusters. This addition of random velocities will 'smear' their positions in the map. It looks like "Fingers of God" stretching towards Earth. If you see them, they are pointing the way home!</p>
+
+    <h2>How are these images created? (for nerds)</h2>
+    <p>The sky position and redshift of galaxies are converted to comoving space: a way of measuring space which is constant as it expands. These 3D points were split into slices corresponding to 2 deg in sky declination and then trimmed to squares. The sizes listed correspond to one edge of the square image. In each image, right ascension approximately spans across one side of the image and redshift another. Points are shaded based on declination to distinguish between foreground and background structure. For more details about this site and galactic constellations, see this paper: [link coming soon]</p>
+  </main>
+
+  <footer class="site-footer">Created by Claire Lamman</footer>
+</body>
+</html>

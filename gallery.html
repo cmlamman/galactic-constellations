@@ -335,6 +335,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 
   <script>
     firebase.initializeApp({
@@ -349,18 +350,21 @@
 
     const db = firebase.firestore();
     const storage = firebase.storage();
+    const auth = firebase.auth();
     const gallery = document.getElementById('gallery');
     const status = document.getElementById('status');
     const sortToggle = document.getElementById('sortToggle');
     const MAX_ENTRIES = 2000;
 
-    // Admin mode: append ?admin=YOUR_PASSWORD to the URL
-    const ADMIN_PASSWORD = 'nofishing';
-    const urlParams = new URLSearchParams(window.location.search);
-    const isAdmin = urlParams.get('admin') === ADMIN_PASSWORD;
+    // Admin: set this to your Firebase Auth UID after first sign-in
+    // Check the browser console — it logs your UID on load
+    const ADMIN_UID = '';  // paste your UID here after first load
 
-    // Track votes per session so one user can only vote once per image
-    const sessionVotes = {}; // docId -> 'up' | 'down'
+    let currentUser = null;
+    let isAdmin = false;
+
+    // Per-user votes loaded from Firestore (persists across sessions)
+    const userVotes = {}; // docId -> 'up' | 'down'
 
     let allEntries = [];
     let currentSort = 'top'; // 'top' | 'new' | 'random'
@@ -484,7 +488,7 @@
       `;
 
       // Restore session vote state
-      const prev = sessionVotes[entry.id];
+      const prev = userVotes[entry.id];
       if (prev === 'up') card.querySelector('.upvote').classList.add('active-up');
       if (prev === 'down') card.querySelector('.downvote').classList.add('active-down');
 
@@ -518,39 +522,51 @@
       return card;
     }
 
-    // ── Vote logic ──
+    // ── Vote logic (per-user via subcollection) ──
     async function vote(docId, direction) {
-      const prev = sessionVotes[docId];
-      const ref = db.collection('constellations').doc(docId);
+      if (!currentUser) {
+        showToast('Signing in…');
+        return;
+      }
+
+      const prev = userVotes[docId];
+      const conRef = db.collection('constellations').doc(docId);
+      const voteRef = conRef.collection('votes').doc(currentUser.uid);
 
       try {
+        const batch = db.batch();
+
         if (prev === direction) {
           // Undo vote
+          batch.delete(voteRef);
           if (direction === 'up') {
-            await ref.update({ upvotes: firebase.firestore.FieldValue.increment(-1) });
+            batch.update(conRef, { upvotes: firebase.firestore.FieldValue.increment(-1) });
           } else {
-            await ref.update({ downvotes: firebase.firestore.FieldValue.increment(-1) });
+            batch.update(conRef, { downvotes: firebase.firestore.FieldValue.increment(-1) });
           }
-          delete sessionVotes[docId];
+          delete userVotes[docId];
         } else {
           // Remove previous vote if switching
           if (prev === 'up') {
-            await ref.update({ upvotes: firebase.firestore.FieldValue.increment(-1) });
+            batch.update(conRef, { upvotes: firebase.firestore.FieldValue.increment(-1) });
           } else if (prev === 'down') {
-            await ref.update({ downvotes: firebase.firestore.FieldValue.increment(-1) });
+            batch.update(conRef, { downvotes: firebase.firestore.FieldValue.increment(-1) });
           }
 
           // Apply new vote
+          batch.set(voteRef, { vote: direction });
           if (direction === 'up') {
-            await ref.update({ upvotes: firebase.firestore.FieldValue.increment(1) });
+            batch.update(conRef, { upvotes: firebase.firestore.FieldValue.increment(1) });
           } else {
-            await ref.update({ downvotes: firebase.firestore.FieldValue.increment(1) });
+            batch.update(conRef, { downvotes: firebase.firestore.FieldValue.increment(1) });
           }
-          sessionVotes[docId] = direction;
+          userVotes[docId] = direction;
         }
 
+        await batch.commit();
+
         // Update UI
-        const doc = await ref.get();
+        const doc = await conRef.get();
         const d = doc.data();
         const net = (d.upvotes || 0) - (d.downvotes || 0);
         const scoreEl = document.getElementById(`score-${docId}`);
@@ -559,8 +575,8 @@
         // Update button states
         const upBtn = document.querySelector(`.upvote[data-id="${docId}"]`);
         const downBtn = document.querySelector(`.downvote[data-id="${docId}"]`);
-        upBtn.classList.toggle('active-up', sessionVotes[docId] === 'up');
-        downBtn.classList.toggle('active-down', sessionVotes[docId] === 'down');
+        if (upBtn) upBtn.classList.toggle('active-up', userVotes[docId] === 'up');
+        if (downBtn) downBtn.classList.toggle('active-down', userVotes[docId] === 'down');
 
       } catch (err) {
         console.error('Vote failed:', err);
@@ -598,7 +614,56 @@
       setTimeout(() => t.classList.remove('show'), 2500);
     }
 
-    loadGallery();
+    // ── Load user's existing votes from Firestore ──
+    async function loadUserVotes() {
+      if (!currentUser) return;
+      try {
+        // Query all vote subcollections for this user via collectionGroup
+        const snapshot = await db.collectionGroup('votes')
+          .where(firebase.firestore.FieldPath.documentId(), '>=', currentUser.uid)
+          .where(firebase.firestore.FieldPath.documentId(), '<=', currentUser.uid)
+          .get();
+        // The above won't work for subcollections — instead load per-entry
+      } catch (e) {
+        // Fallback: load votes per displayed entry (done in renderGallery)
+      }
+    }
+
+    // ── Load votes for displayed entries ──
+    async function loadVotesForEntries(entries) {
+      if (!currentUser) return;
+      const promises = entries.map(async entry => {
+        try {
+          const voteDoc = await db.collection('constellations')
+            .doc(entry.id).collection('votes').doc(currentUser.uid).get();
+          if (voteDoc.exists) {
+            userVotes[entry.id] = voteDoc.data().vote;
+          }
+        } catch (e) {
+          // ignore individual failures
+        }
+      });
+      await Promise.all(promises);
+    }
+
+    // ── Auth-aware startup ──
+    auth.signInAnonymously().catch(err => {
+      console.error('Auth failed:', err);
+    });
+
+    auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        currentUser = user;
+        isAdmin = user.uid === ADMIN_UID;
+        console.log('Your Firebase UID:', user.uid);
+        if (isAdmin) console.log('Admin mode active');
+        await loadGallery();
+        // Load this user's votes for displayed entries, then re-render to show vote states
+        const displayed = [...allEntries].slice(0, PAGE_LIMIT);
+        await loadVotesForEntries(displayed);
+        renderGallery();
+      }
+    });
   </script>
   <footer class="site-footer">Created by Claire Lamman</footer>
 </body>

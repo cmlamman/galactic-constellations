@@ -356,6 +356,7 @@
     let currentStroke = null;
     let isDrawing = false;
     let hasDrawn = false;
+    let loadGeneration = 0;
 
     const img       = document.getElementById('sliceImg');
     const canvas    = document.getElementById('drawCanvas');
@@ -386,6 +387,7 @@
 
     function loadRandomSlice() {
       if (!imageList.length) return;
+      const gen = ++loadGeneration;
       currentFile = imageList[Math.floor(Math.random() * imageList.length)];
       rotation = [0, 90, 180, 270][Math.floor(Math.random() * 4)];
       strokes = [];
@@ -398,7 +400,9 @@
       img.src = 'web-images/' + currentFile;
       img.style.transform = `rotate(${rotation}deg)`;
       updateCaption();
-      img.onload = () => resizeCanvas();
+      img.onload = () => {
+        if (gen === loadGeneration) resizeCanvas();
+      };
     }
 
     function updateCaption() {
@@ -639,16 +643,18 @@
       showToast('Image downloaded!');
     });
 
-    // ── Check how many submissions exist ──
-    async function getSubmissionCount() {
+    // ── Submission count (cached) ──
+    let cachedCount = -1;
+    async function initSubmissionCount() {
       try {
         const snapshot = await db.collection('constellations').get();
-        return snapshot.size;
+        cachedCount = snapshot.size;
       } catch (err) {
         console.error('Count check failed:', err);
-        return -1;
+        cachedCount = -1;
       }
     }
+    initSubmissionCount();
 
     // ── Submit ──
     btnSubmit.addEventListener('click', async () => {
@@ -677,8 +683,7 @@
 
       try {
         // Check cap
-        const count = await getSubmissionCount();
-        if (count >= MAX_SUBMISSIONS) {
+        if (cachedCount >= MAX_SUBMISSIONS) {
           showToast('Gallery is full — no more submissions accepted.');
           btnSubmit.disabled = false;
           btnSubmit.textContent = 'Submit';
@@ -719,6 +724,7 @@
 
         lastSubmitTime = Date.now();
         lastSubmittedKey = submitKey;
+        cachedCount++;
         showToast('Constellation uploaded!');
 
       } catch (err) {

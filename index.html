@@ -86,7 +86,8 @@
     .draw-instruction {
       font-size: 1.2rem;
       font-weight: 300;
-      color: #555;
+      font-style: italic;
+      color: #888;
       margin-bottom: 0.5rem;
       letter-spacing: 0.02em;
     }
@@ -286,7 +287,7 @@
 <body>
 
   <header>
-    <h1><img src="media/gc-fish.svg" alt="" class="title-icon">Galactic Constellations</h1>
+    <h1><img src="gc-fish.svg" alt="" class="title-icon">Galactic Constellations</h1>
     <nav>
       <a href="index.html" class="active">Find constellations</a>
       <a href="gallery.html">See others</a>
@@ -298,7 +299,7 @@
     <section class="left">
       <p class="draw-instruction">Draw your constellation below</p>
       <div class="canvas-wrap" id="canvasWrap">
-        <img id="sliceImg" alt="Galaxy slice" />
+        <img id="sliceImg" alt="" style="visibility:hidden" />
         <canvas id="drawCanvas"></canvas>
       </div>
       <p class="image-caption" id="caption">Loading…</p>
@@ -397,11 +398,17 @@
       share.classList.add('disabled');
       document.getElementById('constellationName').value = '';
       document.getElementById('astronomerName').value = '';
-      img.src = 'web-images/' + currentFile;
-      img.style.transform = `rotate(${rotation}deg)`;
       updateCaption();
-      img.onload = () => {
-        if (gen === loadGeneration) resizeCanvas();
+
+      // Preload the image before displaying it
+      const preload = new Image();
+      preload.src = 'web-images/' + currentFile;
+      preload.onload = () => {
+        if (gen !== loadGeneration) return;
+        img.src = preload.src;
+        img.style.transform = `rotate(${rotation}deg)`;
+        img.style.visibility = 'visible';
+        resizeCanvas();
       };
     }
 

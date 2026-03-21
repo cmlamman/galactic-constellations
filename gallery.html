@@ -119,6 +119,19 @@
       color: #64faed;
     }
 
+    .voting-notice {
+      text-align: center;
+      font-size: 0.85rem;
+      font-weight: 300;
+      font-style: italic;
+      color: #888;
+      padding: 0.3rem 1rem 0.5rem;
+    }
+
+    .voting-notice.hidden {
+      display: none;
+    }
+
     .gallery {
       max-width: 1400px;
       margin: 0 auto;
@@ -299,7 +312,7 @@
 <body>
 
   <header>
-    <h1><img src="media/gc-fish.svg" alt="" class="title-icon">Galactic Constellations</h1>
+    <h1><img src="gc-fish.svg" alt="" class="title-icon">Galactic Constellations</h1>
     <nav>
       <a href="index.html">Find constellations</a>
       <a href="gallery.html" class="active">See others</a>
@@ -314,6 +327,7 @@
     <button class="sort-btn" id="sortRandom">Random</button>
     <button class="sort-btn" id="sortNew">New discoveries</button>
   </div>
+  <p class="voting-notice" id="votingNotice">Voting disabled on 'top' sort</p>
   <main class="gallery" id="gallery"></main>
 
   <div class="toast" id="toast"></div>
@@ -341,7 +355,7 @@
     const MAX_ENTRIES = 2000;
 
     // Admin mode: append ?admin=YOUR_PASSWORD to the URL
-    const ADMIN_PASSWORD = 'nofishing';
+    const ADMIN_PASSWORD = 'desi-admin-2026';
     const urlParams = new URLSearchParams(window.location.search);
     const isAdmin = urlParams.get('admin') === ADMIN_PASSWORD;
 
@@ -358,12 +372,15 @@
       new: document.getElementById('sortNew')
     };
 
+    const votingNotice = document.getElementById('votingNotice');
+
     // ── Sort toggle ──
     function setSort(mode) {
       if (currentSort === mode) return;
       currentSort = mode;
       Object.values(sortButtons).forEach(btn => btn.classList.remove('active'));
       sortButtons[mode].classList.add('active');
+      votingNotice.classList.toggle('hidden', mode !== 'top');
       renderGallery();
     }
 

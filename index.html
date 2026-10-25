@@ -224,36 +224,16 @@
     .share-section input::placeholder { color: #555; }
     .share-section input:focus { border-color: #666; }
 
-    .btn-submit {
+    .btn-download {
       background: #64faed;
       border-color: #64faed;
       color: #000;
     }
 
-    .btn-submit:hover {
+    .btn-download:hover {
       background: #8bfcf2;
       border-color: #8bfcf2;
       color: #000;
-    }
-
-    .btn-submit:disabled {
-      background: #1a4a47;
-      border-color: #1a4a47;
-      color: #555;
-      cursor: not-allowed;
-      opacity: 0.6;
-    }
-
-    .btn-download {
-      background: transparent;
-      border-color: #64faed;
-      color: #64faed;
-    }
-
-    .btn-download:hover {
-      background: rgba(100, 250, 237, 0.1);
-      border-color: #8bfcf2;
-      color: #8bfcf2;
     }
 
     .toast {
@@ -330,40 +310,18 @@
       <hr class="divider">
 
       <div class="share-section disabled" id="shareSection">
-        <h3>Share my constellation</h3>
+        <h3>Save my constellation</h3>
         <input type="text" id="constellationName" placeholder="Constellation name" maxlength="30" />
         <input type="text" id="astronomerName" placeholder="Astronomer name" maxlength="30" />
-        <button class="btn btn-submit" id="btnSubmit">Submit</button>
         <button class="btn btn-download" id="btnDownload">Download</button>
-        <p class="submit-notice">Submitting will display your constellation on this site.</p>
+        <p class="submit-notice">This site is now an archive. Submissions are closed, but you can still download your constellation.</p>
       </div>
     </aside>
   </main>
 
   <div class="toast" id="toast"></div>
 
-  <!-- Firebase SDK (compat builds for plain script usage) -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-
   <script>
-    // ── Firebase ──
-    firebase.initializeApp({
-      apiKey: "AIzaSyDwMgQ53YGwDWL1IhhkBbsIvauALELvpMY",
-      authDomain: "galactic-constellations.firebaseapp.com",
-      projectId: "galactic-constellations",
-      storageBucket: "galactic-constellations.firebasestorage.app",
-      messagingSenderId: "761744782436",
-      appId: "1:761744782436:web:749b09fe749f9548bc5b71",
-      measurementId: "G-EV9PPQDPCS"
-    });
-    const storage = firebase.storage();
-    const db = firebase.firestore();
-    const MAX_SUBMISSIONS = 2000;
-    const RATE_LIMIT_MS = 60000;
-    let lastSubmitTime = 0;
-    let lastSubmittedKey = '';
     let lastDownloadedKey = '';
 
     // ── State ──
@@ -383,7 +341,6 @@
     const subcaption = document.getElementById('subcaption');
     const share     = document.getElementById('shareSection');
     const toast     = document.getElementById('toast');
-    const btnSubmit = document.getElementById('btnSubmit');
 
     // ── Load image list ──
     async function init() {
@@ -410,7 +367,6 @@
       rotation = [0, 90, 180, 270][Math.floor(Math.random() * 4)];
       strokes = [];
       hasDrawn = false;
-      lastSubmittedKey = '';
       lastDownloadedKey = '';
       share.classList.add('disabled');
       document.getElementById('constellationName').value = '';
@@ -535,37 +491,6 @@
       }
     });
 
-    // ── Compose final image ──
-    function compositeImage() {
-      return new Promise(resolve => {
-        const out = document.createElement('canvas');
-        const wrap = document.getElementById('canvasWrap');
-        out.width  = wrap.offsetWidth;
-        out.height = wrap.offsetHeight;
-        const octx = out.getContext('2d');
-
-        octx.save();
-        octx.translate(out.width / 2, out.height / 2);
-        octx.rotate((rotation * Math.PI) / 180);
-        octx.drawImage(img, -out.width / 2, -out.height / 2, out.width, out.height);
-        octx.restore();
-
-        strokes.forEach(pts => {
-          if (pts.length < 2) return;
-          octx.beginPath();
-          octx.moveTo(pts[0].x * out.width, pts[0].y * out.height);
-          for (let i = 1; i < pts.length; i++) octx.lineTo(pts[i].x * out.width, pts[i].y * out.height);
-          octx.strokeStyle = 'rgba(100, 250, 237, 0.6)';
-          octx.lineWidth = 8;
-          octx.lineCap = 'round';
-          octx.lineJoin = 'round';
-          octx.stroke();
-        });
-
-        out.toBlob(blob => resolve(blob), 'image/png');
-      });
-    }
-
     // ── Compose image with caption text at bottom ──
     function compositeImageWithText() {
       return new Promise(resolve => {
@@ -667,99 +592,6 @@
       showToast('Image downloaded!');
     });
 
-    // ── Submission count (cached) ──
-    let cachedCount = -1;
-    async function initSubmissionCount() {
-      try {
-        const snapshot = await db.collection('constellations').get();
-        cachedCount = snapshot.size;
-      } catch (err) {
-        console.error('Count check failed:', err);
-        cachedCount = -1;
-      }
-    }
-    initSubmissionCount();
-
-    // ── Submit ──
-    btnSubmit.addEventListener('click', async () => {
-      const cName = document.getElementById('constellationName').value.trim();
-      const aName = document.getElementById('astronomerName').value.trim();
-
-      if (!cName || !aName) { showToast('Please fill in both fields.'); return; }
-
-      // Check for duplicate submission
-      const submitKey = `${currentFile}|${cName}|${aName}`;
-      if (submitKey === lastSubmittedKey) {
-        showToast('Already submitted!');
-        return;
-      }
-
-      // Rate limit
-      const now = Date.now();
-      if (now - lastSubmitTime < RATE_LIMIT_MS) {
-        const wait = Math.ceil((RATE_LIMIT_MS - (now - lastSubmitTime)) / 1000);
-        showToast(`Please wait ${wait}s before submitting again.`);
-        return;
-      }
-
-      btnSubmit.disabled = true;
-      btnSubmit.textContent = 'Uploading…';
-
-      try {
-        // Check cap
-        if (cachedCount >= MAX_SUBMISSIONS) {
-          showToast('Gallery is full — no more submissions accepted.');
-          btnSubmit.disabled = false;
-          btnSubmit.textContent = 'Submit';
-          return;
-        }
-
-        // Build filename
-        const base = currentFile.replace('.png', '');
-        const safeCName = cName.replace(/[^a-zA-Z0-9_-]/g, '_');
-        const safeAName = aName.replace(/[^a-zA-Z0-9_-]/g, '_');
-        const outName = `${base}_${safeCName}_${safeAName}.png`;
-
-        // Upload image
-        const blob = await compositeImage();
-        const ref = storage.ref(`generated-constellations/${outName}`);
-        await ref.put(blob, {
-          contentType: 'image/png',
-          customMetadata: {
-            constellationName: cName,
-            astronomerName: aName,
-            sourceImage: currentFile,
-            rotation: String(rotation)
-          }
-        });
-
-        // Get download URL and create Firestore entry
-        const imageUrl = await ref.getDownloadURL();
-        await db.collection('constellations').doc(outName).set({
-          constellationName: cName,
-          astronomerName: aName,
-          sourceImage: currentFile,
-          imageUrl: imageUrl,
-          fileName: outName,
-          upvotes: 0,
-          downvotes: 0,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-        lastSubmitTime = Date.now();
-        lastSubmittedKey = submitKey;
-        cachedCount++;
-        showToast('Constellation uploaded!');
-
-      } catch (err) {
-        console.error('Upload failed:', err);
-        showToast('Upload failed — please try again.');
-      }
-
-      btnSubmit.disabled = false;
-      btnSubmit.textContent = 'Submit';
-    });
-
     // ── Toast ──
     function showToast(msg) {
       toast.textContent = msg;
@@ -769,6 +601,6 @@
 
     init();
   </script>
-  <footer class="site-footer">Created by Claire Lamman · © 2026</p>This site uses cookies for anonymous authentication and voting</footer>
+  <footer class="site-footer">Created by Claire Lamman · © 2026<br>This site uses cookies for anonymous analytics</footer>
 </body>
 </html>

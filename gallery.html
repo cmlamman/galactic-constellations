@@ -96,14 +96,6 @@
       padding: 0.5rem 1rem 0.5rem;
     }
 
-    .sort-label {
-      font-size: 0.82rem;
-      font-weight: 300;
-      color: #ccc;
-      letter-spacing: 0.04em;
-      margin-left: 1rem;
-    }
-
     .sort-btn {
       background: transparent;
       border: 1px solid #333;
@@ -135,10 +127,6 @@
       font-style: italic;
       color: #888;
       padding: 0.3rem 1rem 0.5rem;
-    }
-
-    .voting-notice.hidden {
-      display: none;
     }
 
     .gallery {
@@ -204,67 +192,27 @@
       gap: 0.5rem;
     }
 
-    .vote-btn {
-      background: transparent;
-      border: 1px solid #333;
-      border-radius: 2px;
-      color: #888;
-      font-size: 0.85rem;
-      padding: 0.3rem 0.6rem;
-      cursor: pointer;
-      transition: all 0.2s;
-      font-family: 'DM Sans', sans-serif;
-      display: flex;
-      align-items: center;
-      gap: 0.3rem;
-    }
-
-    .vote-btn:hover {
-      border-color: #555;
-      color: #fff;
-    }
-
-    .vote-btn.active-up {
-      border-color: #64faed;
-      color: #64faed;
-      background: rgba(100, 250, 237, 0.1);
-    }
-
-    .vote-btn.active-down {
-      border-color: #e05050;
-      color: #e05050;
-      background: rgba(224, 80, 80, 0.1);
-    }
-
-    .vote-btn.disabled {
-      pointer-events: none;
-      opacity: 0.3;
-      cursor: default;
-    }
-
-    .delete-btn {
-      background: transparent;
-      border: 1px solid #e05050;
-      border-radius: 2px;
-      color: #e05050;
-      font-size: 0.75rem;
-      font-family: 'DM Sans', sans-serif;
-      padding: 0.25rem 0.5rem;
-      cursor: pointer;
-      margin-left: auto;
-      transition: all 0.2s;
-    }
-
-    .delete-btn:hover {
-      background: rgba(224, 80, 80, 0.15);
-    }
-
     .vote-score {
       font-size: 0.85rem;
       font-weight: 400;
       color: #aaa;
-      min-width: 2rem;
-      text-align: center;
+    }
+
+    .card-download {
+      margin-left: auto;
+      font-size: 0.75rem;
+      font-weight: 300;
+      color: #64faed;
+      text-decoration: none;
+      border: 1px solid #333;
+      border-radius: 2px;
+      padding: 0.25rem 0.5rem;
+      transition: all 0.2s;
+    }
+
+    .card-download:hover {
+      border-color: #64faed;
+      background: rgba(100, 250, 237, 0.1);
     }
 
     /* ── Loading / Empty ── */
@@ -275,29 +223,6 @@
       font-weight: 300;
       color: #666;
       letter-spacing: 0.05em;
-    }
-
-    /* ── Toast ── */
-    .toast {
-      position: fixed;
-      bottom: 2rem;
-      left: 50%;
-      transform: translateX(-50%) translateY(100px);
-      background: #1a1a1a;
-      border: 1px solid #333;
-      color: #fff;
-      padding: 0.8rem 1.6rem;
-      font-size: 0.85rem;
-      border-radius: 3px;
-      opacity: 0;
-      transition: transform 0.4s ease, opacity 0.4s ease;
-      pointer-events: none;
-      z-index: 100;
-    }
-
-    .toast.show {
-      transform: translateX(-50%) translateY(0);
-      opacity: 1;
     }
 
     @media (max-width: 600px) {
@@ -332,52 +257,20 @@
   <p class="gallery-status" id="status">Loading gallery…</p>
   <div class="sort-toggle" id="sortToggle" style="display:none;">
     <button class="sort-btn active" id="sortTop">Top discoveries</button>
-    <span class="sort-label">Under peer review:</span>
     <button class="sort-btn" id="sortRandom">Random</button>
     <button class="sort-btn" id="sortNew">New discoveries</button>
   </div>
-  <p class="voting-notice" id="votingNotice">Voting disabled on 'top' sort</p>
+  <p class="voting-notice">This site is now an archive. Submissions and voting are closed.</p>
   <main class="gallery" id="gallery"></main>
 
-  <div class="toast" id="toast"></div>
-
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-
   <script>
-    firebase.initializeApp({
-      apiKey: "AIzaSyDwMgQ53YGwDWL1IhhkBbsIvauALELvpMY",
-      authDomain: "galactic-constellations.firebaseapp.com",
-      projectId: "galactic-constellations",
-      storageBucket: "galactic-constellations.firebasestorage.app",
-      messagingSenderId: "761744782436",
-      appId: "1:761744782436:web:749b09fe749f9548bc5b71",
-      measurementId: "G-EV9PPQDPCS"
-    });
-
-    const db = firebase.firestore();
-    const storage = firebase.storage();
-    const auth = firebase.auth();
     const gallery = document.getElementById('gallery');
     const status = document.getElementById('status');
     const sortToggle = document.getElementById('sortToggle');
-    const MAX_ENTRIES = 2000;
-
-    // Admin: set this to your Firebase Auth UID after first sign-in
-    // Check the browser console — it logs your UID on load
-    const ADMIN_UID = 'Tq7OBd6EHThzQA99LaI1741XoQ23';  // paste UID here
-
-    let currentUser = null;
-    let isAdmin = false;
-
-    // Per-user votes loaded from Firestore (persists across sessions)
-    const userVotes = {}; // docId -> 'up' | 'down'
+    const ARCHIVE_DIR = 'archive/constellations/';
 
     let allEntries = [];
     let currentSort = 'top'; // 'top' | 'new' | 'random'
-    const PAGE_LIMIT = 72;
 
     const sortButtons = {
       top: document.getElementById('sortTop'),
@@ -385,15 +278,12 @@
       new: document.getElementById('sortNew')
     };
 
-    const votingNotice = document.getElementById('votingNotice');
-
     // ── Sort toggle ──
     function setSort(mode) {
-      if (currentSort === mode) return;
+      if (currentSort === mode && mode !== 'random') return;
       currentSort = mode;
       Object.values(sortButtons).forEach(btn => btn.classList.remove('active'));
       sortButtons[mode].classList.add('active');
-      votingNotice.classList.toggle('hidden', mode !== 'top');
       renderGallery();
     }
 
@@ -419,46 +309,25 @@
         }
       }
 
-      const votingDisabled = currentSort === 'top';
-      const limited = sorted.slice(0, PAGE_LIMIT);
-
       gallery.innerHTML = '';
-      limited.forEach(entry => gallery.appendChild(createCard(entry, votingDisabled)));
+      sorted.forEach(entry => gallery.appendChild(createCard(entry)));
     }
 
     // ── Load and render ──
     async function loadGallery() {
       try {
-        const snapshot = await db.collection('constellations').get();
+        const res = await fetch('archive/constellations.json');
+        const data = await res.json();
 
-        if (snapshot.empty) {
-          status.textContent = 'No constellations yet. Be the first to share one!';
-          return;
-        }
-
-        allEntries = [];
-        snapshot.forEach(doc => {
-          const d = doc.data();
-          allEntries.push({
-            id: doc.id,
-            ...d,
-            netVotes: (d.upvotes || 0) - (d.downvotes || 0),
-            createdAt: d.createdAt ? d.createdAt.toMillis() : 0
-          });
-        });
+        allEntries = data.map(d => ({
+          ...d,
+          netVotes: (d.upvotes || 0) - (d.downvotes || 0),
+          createdAt: d.createdAt ? Date.parse(d.createdAt) : 0
+        }));
 
         status.innerHTML = `${allEntries.length} constellation${allEntries.length !== 1 ? 's' : ''} found within <a href="https://data.desi.lbl.gov/doc/releases/dr1/" target="_blank" rel="noopener">DESI's DR1</a>`;
         sortToggle.style.display = 'flex';
         renderGallery();
-
-        // Prune if over limit (sort by top for pruning decisions)
-        if (allEntries.length > MAX_ENTRIES) {
-          const pruneSorted = [...allEntries].sort((a, b) => {
-            if (b.netVotes !== a.netVotes) return b.netVotes - a.netVotes;
-            return b.createdAt - a.createdAt;
-          });
-          pruneExcess(pruneSorted);
-        }
 
       } catch (err) {
         console.error('Failed to load gallery:', err);
@@ -472,208 +341,38 @@
       return { ra: m[1], dec: m[2], z: m[3], size: m[4] };
     }
 
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
     // ── Create a card ──
-    function createCard(entry, votingDisabled) {
+    function createCard(entry) {
       const card = document.createElement('div');
       card.className = 'card';
 
-      const net = (entry.upvotes || 0) - (entry.downvotes || 0);
       const p = parseName(entry.sourceImage || '');
       const sliceText = p ? `${p.size} Mpc/h slice · z=${p.z}  RA=${p.ra}  DEC=${p.dec}` : '';
-      const disabledClass = votingDisabled ? ' disabled' : '';
+      const src = ARCHIVE_DIR + encodeURIComponent(entry.fileName);
+      const name = escapeHtml(entry.constellationName || 'Untitled');
+      const author = escapeHtml(entry.astronomerName || 'Anonymous');
 
       card.innerHTML = `
-        <img class="card-img" src="${entry.imageUrl}" alt="${entry.constellationName || 'Constellation'}" loading="lazy" />
+        <img class="card-img" src="${src}" alt="${name}" loading="lazy" />
         <div class="card-body">
-          <div class="card-title"><span class="name">"${entry.constellationName || 'Untitled'}"</span> <span class="author">found by ${entry.astronomerName || 'Anonymous'}</span></div>
+          <div class="card-title"><span class="name">"${name}"</span> <span class="author">found by ${author}</span></div>
           ${sliceText ? `<div class="card-slice">${sliceText}</div>` : ''}
           <div class="card-votes">
-            <button class="vote-btn upvote${disabledClass}" data-id="${entry.id}" data-dir="up" title="Upvote">&#9650;</button>
-            <span class="vote-score" id="score-${entry.id}">${net}</span>
-            <button class="vote-btn downvote${disabledClass}" data-id="${entry.id}" data-dir="down" title="Downvote">&#9660;</button>
-            ${isAdmin ? `<button class="delete-btn" data-id="${entry.id}" data-file="${entry.fileName || ''}">delete</button>` : ''}
+            <span class="vote-score" title="Final score">&#9650; ${entry.netVotes}</span>
+            <a class="card-download" href="${src}" download="${escapeHtml(entry.fileName)}">Download</a>
           </div>
         </div>
       `;
 
-      // Restore session vote state
-      const prev = userVotes[entry.id];
-      if (prev === 'up') card.querySelector('.upvote').classList.add('active-up');
-      if (prev === 'down') card.querySelector('.downvote').classList.add('active-down');
-
-      // Vote handlers (only if voting enabled)
-      if (!votingDisabled) {
-        card.querySelector('.upvote').addEventListener('click', () => vote(entry.id, 'up'));
-        card.querySelector('.downvote').addEventListener('click', () => vote(entry.id, 'down'));
-      }
-
-      // Admin delete handler
-      const delBtn = card.querySelector('.delete-btn');
-      if (delBtn) {
-        delBtn.addEventListener('click', async () => {
-          if (!confirm(`Delete "${entry.constellationName}"?`)) return;
-          try {
-            await db.collection('constellations').doc(entry.id).delete();
-            if (entry.fileName) {
-              await storage.ref(`generated-constellations/${entry.fileName}`).delete();
-            }
-            allEntries = allEntries.filter(e => e.id !== entry.id);
-            card.remove();
-            status.innerHTML = `${allEntries.length} constellation${allEntries.length !== 1 ? 's' : ''} found within <a href="https://data.desi.lbl.gov/doc/releases/dr1/" target="_blank" rel="noopener">DESI's DR1</a>`;
-            showToast('Deleted.');
-          } catch (err) {
-            console.error('Delete failed:', err);
-            showToast('Delete failed.');
-          }
-        });
-      }
-
       return card;
     }
 
-    // ── Vote logic (per-user via subcollection) ──
-    async function vote(docId, direction) {
-      if (!currentUser) {
-        showToast('Signing in…');
-        return;
-      }
-
-      const prev = userVotes[docId];
-      const conRef = db.collection('constellations').doc(docId);
-      const voteRef = conRef.collection('votes').doc(currentUser.uid);
-
-      try {
-        const batch = db.batch();
-
-        if (prev === direction) {
-          // Undo vote
-          batch.delete(voteRef);
-          if (direction === 'up') {
-            batch.update(conRef, { upvotes: firebase.firestore.FieldValue.increment(-1) });
-          } else {
-            batch.update(conRef, { downvotes: firebase.firestore.FieldValue.increment(-1) });
-          }
-          delete userVotes[docId];
-        } else {
-          // Remove previous vote if switching
-          if (prev === 'up') {
-            batch.update(conRef, { upvotes: firebase.firestore.FieldValue.increment(-1) });
-          } else if (prev === 'down') {
-            batch.update(conRef, { downvotes: firebase.firestore.FieldValue.increment(-1) });
-          }
-
-          // Apply new vote
-          batch.set(voteRef, { vote: direction });
-          if (direction === 'up') {
-            batch.update(conRef, { upvotes: firebase.firestore.FieldValue.increment(1) });
-          } else {
-            batch.update(conRef, { downvotes: firebase.firestore.FieldValue.increment(1) });
-          }
-          userVotes[docId] = direction;
-        }
-
-        await batch.commit();
-
-        // Update UI
-        const doc = await conRef.get();
-        const d = doc.data();
-        const net = (d.upvotes || 0) - (d.downvotes || 0);
-        const scoreEl = document.getElementById(`score-${docId}`);
-        if (scoreEl) scoreEl.textContent = net;
-
-        // Update button states
-        const upBtn = document.querySelector(`.upvote[data-id="${docId}"]`);
-        const downBtn = document.querySelector(`.downvote[data-id="${docId}"]`);
-        if (upBtn) upBtn.classList.toggle('active-up', userVotes[docId] === 'up');
-        if (downBtn) downBtn.classList.toggle('active-down', userVotes[docId] === 'down');
-
-      } catch (err) {
-        console.error('Vote failed:', err);
-        showToast('Vote failed — please try again.');
-      }
-    }
-
-    // ── Prune entries beyond MAX_ENTRIES ──
-    async function pruneExcess(sortedEntries) {
-      // sortedEntries is already sorted best-first
-      // Remove everything beyond the limit
-      const toRemove = sortedEntries.slice(MAX_ENTRIES);
-
-      for (const entry of toRemove) {
-        try {
-          // Delete from Firestore
-          await db.collection('constellations').doc(entry.id).delete();
-          // Delete from Storage
-          await storage.ref(`generated-constellations/${entry.fileName}`).delete();
-        } catch (err) {
-          console.error(`Failed to prune ${entry.id}:`, err);
-        }
-      }
-
-      if (toRemove.length) {
-        console.log(`Pruned ${toRemove.length} entries.`);
-      }
-    }
-
-    // ── Toast ──
-    function showToast(msg) {
-      const t = document.getElementById('toast');
-      t.textContent = msg;
-      t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 2500);
-    }
-
-    // ── Load user's existing votes from Firestore ──
-    async function loadUserVotes() {
-      if (!currentUser) return;
-      try {
-        // Query all vote subcollections for this user via collectionGroup
-        const snapshot = await db.collectionGroup('votes')
-          .where(firebase.firestore.FieldPath.documentId(), '>=', currentUser.uid)
-          .where(firebase.firestore.FieldPath.documentId(), '<=', currentUser.uid)
-          .get();
-        // The above won't work for subcollections — instead load per-entry
-      } catch (e) {
-        // Fallback: load votes per displayed entry (done in renderGallery)
-      }
-    }
-
-    // ── Load votes for displayed entries ──
-    async function loadVotesForEntries(entries) {
-      if (!currentUser) return;
-      const promises = entries.map(async entry => {
-        try {
-          const voteDoc = await db.collection('constellations')
-            .doc(entry.id).collection('votes').doc(currentUser.uid).get();
-          if (voteDoc.exists) {
-            userVotes[entry.id] = voteDoc.data().vote;
-          }
-        } catch (e) {
-          // ignore individual failures
-        }
-      });
-      await Promise.all(promises);
-    }
-
-    // ── Auth-aware startup ──
-    auth.signInAnonymously().catch(err => {
-      console.error('Auth failed:', err);
-    });
-
-    auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        currentUser = user;
-        isAdmin = user.uid === ADMIN_UID;
-        console.log('Your Firebase UID:', user.uid);
-        if (isAdmin) console.log('Admin mode active');
-        await loadGallery();
-        // Load this user's votes for displayed entries, then re-render to show vote states
-        const displayed = [...allEntries].slice(0, PAGE_LIMIT);
-        await loadVotesForEntries(displayed);
-        renderGallery();
-      }
-    });
+    loadGallery();
   </script>
-  <footer class="site-footer">Created by Claire Lamman · © 2026</p>This site uses cookies for anonymous authentication and voting</footer>
+  <footer class="site-footer">Created by Claire Lamman · © 2026<br>This site uses cookies for anonymous analytics</footer>
 </body>
 </html>

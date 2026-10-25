@@ -321,6 +321,7 @@
 
   <div class="toast" id="toast"></div>
 
+  <script src="web-images/images.js"></script>
   <script>
     let lastDownloadedKey = '';
 
@@ -342,13 +343,11 @@
     const share     = document.getElementById('shareSection');
     const toast     = document.getElementById('toast');
 
-    // ── Load image list ──
-    async function init() {
-      try {
-        const res = await fetch('web-images/images.json');
-        imageList = await res.json();
-      } catch {
-        caption.textContent = 'Could not load image list. Make sure web-images/images.json exists.';
+    // ── Load image list (from web-images/images.js) ──
+    function init() {
+      imageList = window.IMAGE_LIST || [];
+      if (!imageList.length) {
+        caption.textContent = 'Could not load image list. Make sure web-images/images.js exists.';
         return;
       }
       loadRandomSlice();

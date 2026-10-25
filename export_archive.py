@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Snapshot the submitted constellations from Firestore/Storage into archive/.
-Writes archive/constellations.json and downloads each image to archive/constellations/.
+Writes archive/constellations.json (plus constellations.js, for opening the site from disk) and downloads each image to archive/constellations/.
 Run from the repo root:  python export_archive.py
 Uses the public Firestore REST API, so no credentials are needed.
 """
@@ -61,4 +61,7 @@ out_path = os.path.join(OUT_DIR, "constellations.json")
 with open(out_path, "w", encoding="utf-8") as fp:
     json.dump(entries, fp, indent=2, ensure_ascii=False)
 
-print(f"Wrote {len(entries)} of {len(docs)} entries to {out_path}")
+with open(os.path.join(OUT_DIR, "constellations.js"), "w", encoding="utf-8") as fp:
+    fp.write("window.ARCHIVE_ENTRIES = " + json.dumps(entries, indent=2, ensure_ascii=False) + ";\n")
+
+print(f"Wrote {len(entries)} of {len(docs)} entries to {out_path} and constellations.js")

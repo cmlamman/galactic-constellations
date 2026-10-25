@@ -263,6 +263,7 @@
   <p class="voting-notice">This site is now an archive. Submissions and voting are closed.</p>
   <main class="gallery" id="gallery"></main>
 
+  <script src="archive/constellations.js"></script>
   <script>
     const gallery = document.getElementById('gallery');
     const status = document.getElementById('status');
@@ -314,10 +315,9 @@
     }
 
     // ── Load and render ──
-    async function loadGallery() {
+    function loadGallery() {
       try {
-        const res = await fetch('archive/constellations.json');
-        const data = await res.json();
+        const data = window.ARCHIVE_ENTRIES;
 
         allEntries = data.map(d => ({
           ...d,

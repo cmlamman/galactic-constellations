@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate web-images/images.json from the contents of the web-images/ directory.
+Generate web-images/images.json (and images.js, for opening the site from disk) from the contents of the web-images/ directory.
 Run from the repo root:  python generate_manifest.py
 Re-run whenever you add or remove images.
 """
@@ -22,4 +22,7 @@ out_path = os.path.join(IMG_DIR, "images.json")
 with open(out_path, "w") as fp:
     json.dump(images, fp, indent=2)
 
-print(f"Wrote {len(images)} entries to {out_path}")
+with open(os.path.join(IMG_DIR, "images.js"), "w") as fp:
+    fp.write("window.IMAGE_LIST = " + json.dumps(images, indent=2) + ";\n")
+
+print(f"Wrote {len(images)} entries to {out_path} and images.js")
